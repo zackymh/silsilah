@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Couple;
-use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class EditMarriagesTest extends TestCase
 {
@@ -13,6 +13,7 @@ class EditMarriagesTest extends TestCase
     /** @test */
     public function user_can_visit_a_marriage_detail_page()
     {
+        $user = $this->loginAsUser();
         $couple = factory(Couple::class)->create();
 
         $this->visit(route('couples.show', $couple));
@@ -34,15 +35,15 @@ class EditMarriagesTest extends TestCase
 
         $this->submitForm(trans('couple.update'), [
             'marriage_date' => '2010-04-04',
-            'divorce_date'  => '2035-04-04',
+            'divorce_date' => '2035-04-04',
         ]);
 
         $this->seePageIs(route('couples.show', $couple));
 
         $this->seeInDatabase('couples', [
-            'id'            => $couple->id,
+            'id' => $couple->id,
             'marriage_date' => '2010-04-04',
-            'divorce_date'  => '2035-04-04',
+            'divorce_date' => '2035-04-04',
         ]);
     }
 }

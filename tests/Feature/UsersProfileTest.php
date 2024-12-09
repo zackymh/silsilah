@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\Images\OptimizeImages;
 use App\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Ramsey\Uuid\Uuid;
 use Storage;
@@ -16,6 +18,8 @@ class UsersProfileTest extends TestCase
     /** @test */
     public function guest_can_search_users_profile()
     {
+        $user = $this->loginAsUser();
+
         $jono = factory(User::class)->create(['name' => 'Jono']);
         $jeni = factory(User::class)->create(['name' => 'Jeni']);
         $johan = factory(user::class)->create(['name' => 'Johan']);
@@ -31,7 +35,7 @@ class UsersProfileTest extends TestCase
     /** @test */
     public function user_can_view_other_users_profile()
     {
-        $user = factory(User::class)->create();
+        $user = $this->loginAsUser();
         $this->visit(route('users.show', $user->id));
         $this->see($user->name);
     }
@@ -54,20 +58,20 @@ class UsersProfileTest extends TestCase
         $this->seePageIs(route('users.edit', $user->id));
 
         $this->submitForm(trans('app.update'), [
-            'nickname'    => 'Nama Panggilan',
-            'name'        => 'Nama User',
-            'gender_id'   => 1,
-            'dob'         => '1959-06-09',
-            'yob'         => '',
+            'nickname' => 'Nama Panggilan',
+            'name' => 'Nama User',
+            'gender_id' => 1,
+            'dob' => '1959-06-09',
+            'yob' => '',
             'birth_order' => 3,
         ]);
 
         $this->seeInDatabase('users', [
-            'nickname'    => 'Nama Panggilan',
-            'name'        => 'Nama User',
-            'gender_id'   => 1,
-            'dob'         => '1959-06-09',
-            'yob'         => '1959',
+            'nickname' => 'Nama Panggilan',
+            'name' => 'Nama User',
+            'gender_id' => 1,
+            'dob' => '1959-06-09',
+            'yob' => '1959',
             'birth_order' => 3,
         ]);
     }
@@ -85,7 +89,7 @@ class UsersProfileTest extends TestCase
         ]);
 
         $this->seeInDatabase('users', [
-            'id'  => $user->id,
+            'id' => $user->id,
             'dob' => null,
             'yob' => '2003',
         ]);
@@ -100,15 +104,15 @@ class UsersProfileTest extends TestCase
 
         $this->submitForm(trans('app.update'), [
             'address' => 'Jln. Angkasa, No. 70',
-            'city'    => 'Nama Kota',
-            'phone'   => '081234567890',
+            'city' => 'Nama Kota',
+            'phone' => '081234567890',
         ]);
 
         $this->seeInDatabase('users', [
-            'id'      => $user->id,
+            'id' => $user->id,
             'address' => 'Jln. Angkasa, No. 70',
-            'city'    => 'Nama Kota',
-            'phone'   => '081234567890',
+            'city' => 'Nama Kota',
+            'phone' => '081234567890',
         ]);
     }
 
@@ -120,13 +124,13 @@ class UsersProfileTest extends TestCase
         $this->seePageIs(route('users.edit', [$user->id, 'tab' => 'login_account']));
 
         $this->submitForm(trans('app.update'), [
-            'email'    => '',
+            'email' => '',
             'password' => '',
         ]);
 
         $this->seeInDatabase('users', [
-            'id'       => $user->id,
-            'email'    => null,
+            'id' => $user->id,
+            'email' => null,
             'password' => null,
         ]);
     }
@@ -144,7 +148,7 @@ class UsersProfileTest extends TestCase
         ]);
 
         $this->seeInDatabase('users', [
-            'id'  => $user->id,
+            'id' => $user->id,
             'dod' => '2003-10-17',
             'yod' => '2003',
         ]);
@@ -163,7 +167,7 @@ class UsersProfileTest extends TestCase
         ]);
 
         $this->seeInDatabase('users', [
-            'id'  => $user->id,
+            'id' => $user->id,
             'dod' => null,
             'yod' => '2003',
         ]);
@@ -177,42 +181,42 @@ class UsersProfileTest extends TestCase
         $this->seePageIs(route('users.edit', [$user->id, 'tab' => 'death']));
 
         $this->submitForm(trans('app.update'), [
-            'dod'                         => '',
-            'yod'                         => '2003',
-            'cemetery_location_name'      => 'Some name',
-            'cemetery_location_address'   => 'Some address',
-            'cemetery_location_latitude'  => '-3.333333',
+            'dod' => '',
+            'yod' => '2003',
+            'cemetery_location_name' => 'Some name',
+            'cemetery_location_address' => 'Some address',
+            'cemetery_location_latitude' => '-3.333333',
             'cemetery_location_longitude' => '114.583333',
         ]);
 
         $this->seeInDatabase('users', [
-            'id'  => $user->id,
+            'id' => $user->id,
             'dod' => null,
             'yod' => '2003',
         ]);
 
         $this->seeInDatabase('user_metadata', [
             'user_id' => $user->id,
-            'key'     => 'cemetery_location_name',
-            'value'   => 'Some name',
+            'key' => 'cemetery_location_name',
+            'value' => 'Some name',
         ]);
 
         $this->seeInDatabase('user_metadata', [
             'user_id' => $user->id,
-            'key'     => 'cemetery_location_address',
-            'value'   => 'Some address',
+            'key' => 'cemetery_location_address',
+            'value' => 'Some address',
         ]);
 
         $this->seeInDatabase('user_metadata', [
             'user_id' => $user->id,
-            'key'     => 'cemetery_location_latitude',
-            'value'   => '-3.333333',
+            'key' => 'cemetery_location_latitude',
+            'value' => '-3.333333',
         ]);
 
         $this->seeInDatabase('user_metadata', [
             'user_id' => $user->id,
-            'key'     => 'cemetery_location_longitude',
-            'value'   => '114.583333',
+            'key' => 'cemetery_location_longitude',
+            'value' => '114.583333',
         ]);
     }
 
@@ -221,16 +225,16 @@ class UsersProfileTest extends TestCase
     {
         $user = $this->loginAsUser();
         DB::table('user_metadata')->insert([
-            'id'      => Uuid::uuid4()->toString(),
+            'id' => Uuid::uuid4()->toString(),
             'user_id' => $user->id,
-            'key'     => 'cemetery_location_name',
-            'value'   => 'Some place name',
+            'key' => 'cemetery_location_name',
+            'value' => 'Some place name',
         ]);
 
         $this->visit(route('users.edit', [$user->id, 'tab' => 'death']));
         $this->seePageIs(route('users.edit', [$user->id, 'tab' => 'death']));
         $this->seeElement('input', [
-            'name'  => 'cemetery_location_name',
+            'name' => 'cemetery_location_name',
             'value' => 'Some place name',
         ]);
     }
@@ -244,7 +248,7 @@ class UsersProfileTest extends TestCase
         $this->seePageIs(route('users.edit', [$user->id, 'tab' => 'login_account']));
 
         $this->submitForm(trans('app.update'), [
-            'email'    => 'user@mail.com',
+            'email' => 'user@mail.com',
             'password' => 'Secr3t',
         ]);
 
@@ -262,7 +266,7 @@ class UsersProfileTest extends TestCase
         $this->seePageIs(route('users.edit', [$user->id, 'tab' => 'login_account']));
 
         $this->submitForm(trans('app.update'), [
-            'email'    => 'user@mail.com',
+            'email' => 'user@mail.com',
             'password' => '',
         ]);
 
@@ -277,26 +281,27 @@ class UsersProfileTest extends TestCase
         $manager = $this->loginAsUser();
         $user = factory(User::class)->create([
             'manager_id' => $manager->id,
-            'password'   => 'some random string password',
+            'password' => 'some random string password',
         ]);
         $this->visit(route('users.edit', [$user->id, 'tab' => 'login_account']));
         $this->seePageIs(route('users.edit', [$user->id, 'tab' => 'login_account']));
 
         $this->submitForm(trans('app.update'), [
-            'email'    => 'user@mail.com',
+            'email' => 'user@mail.com',
             'password' => '',
         ]);
 
         $this->seeInDatabase('users', [
-            'id'         => $user->id,
+            'id' => $user->id,
             'manager_id' => $manager->id,
-            'password'   => 'some random string password',
+            'password' => 'some random string password',
         ]);
     }
 
     /** @test */
     public function user_can_upload_their_own_photo()
     {
+        Bus::fake();
         Storage::fake(config('filesystems.default'));
 
         $user = $this->loginAsUser();
@@ -311,6 +316,7 @@ class UsersProfileTest extends TestCase
         $user = $user->fresh();
 
         $this->assertNotNull($user->photo_path);
+        Bus::assertDispatched(OptimizeImages::class);
         Storage::assertExists($user->photo_path);
     }
 }
